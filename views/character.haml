@@ -15,6 +15,17 @@
     border-radius: 8px;
     pointer-events: none;
   }
+  .grid .tick {
+    stroke: lightgrey;
+    opacity: 0.7;
+  }
+  .grid path {
+        stroke-width: 0;
+  }
+  .line {
+    fill: none;
+    stroke: #000;
+  }
 
 :javascript
   var formatTime = d3.time.format("%e %B %I:%M %p");
@@ -23,7 +34,7 @@
       .attr("class", "tooltip")
       .style("opacity", 0);
 
-  var margin = {top: 20, right: 20, bottom: 30, left: 50},
+  var margin = {top: 30, right: 40, bottom: 80, left: 50},
       width = 960 - margin.left - margin.right,
       height = 500 - margin.top - margin.bottom;
 
@@ -35,19 +46,34 @@
   var y1 = d3.scale.linear()
       .range([height, 0]);
 
-  var xAxis = d3.svg.axis()
-      .scale(x)
-      .orient("bottom");
+  function make_x_axis() {
+      return d3.svg.axis()
+          .scale(x)
+           .orient("bottom")
+  }
 
   var yAxis = d3.svg.axis()
       .scale(y0)
       .orient("left");
+
+  var colorscale = d3.scale.linear()
+      .domain([0, 350, 500, 2000])
+      .range(["red", "orange", "green", "green"]);
+
+  function color(d) {
+    return colorscale(d.exp);
+  }
 
   var svg = d3.select("body").append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var regression = d3.svg.line()
+      .interpolate("basis")
+      .x(function(d) { return x(d.time); })
+      .y(function(d) { return y0(d.running_average); })
 
   d3.json("/smorg_exp.json", function(error, data) {
     x.domain(d3.extent(data, function(d) { return d.time; }));
@@ -57,7 +83,22 @@
     svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
+        .call(make_x_axis())
+        .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", function(d) {
+                return "rotate(-65)"
+                });
+
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("transform", "translate(0," + height + ")")
+        .call(make_x_axis()
+            .tickSize(-height, 0, 0)
+            .tickFormat("")
+        )
 
     svg.append("g")
         .attr("class", "y axis")
@@ -76,6 +117,7 @@
       .attr("r", 2.5)
       .attr("cx", function(d) { return x(d.time); })
       .attr("cy", function(d) { return y0(d.exp); })
+      .style('fill', color)
       .on("mouseover", function(d) {
             div.transition()
                 .duration(200)
@@ -97,7 +139,7 @@
       .attr("r", 1.5)
       .attr("cx", function(d) { return x(d.time); })
       .attr("cy", function(d) { return y1(d.level); })
-      .style("fill", 'red')
+      .style("fill", 'blue')
       .on("mouseover", function(d) {
         div.transition()
             .duration(200)
@@ -111,6 +153,7 @@
               .duration(500)
               .style("opacity", 0);
       });
+    svg.append("svg:path").attr("d", regression(data)).attr("class", "line");
 
 
   });

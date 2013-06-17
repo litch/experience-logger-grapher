@@ -1,9 +1,0 @@
-%h1 Yaay!
-%canvas
-
-=javascript_include_tag "http://d3js.org/d3.v3.min.js"
-=puts @data
-SNthoau
-%ul
-  - @data.each do |datum|
-    %li="#{datum.time.to_i} #{datum.exp}"
