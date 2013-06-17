@@ -26,7 +26,7 @@ class ExpLogParser
   end
 
   def populate_running_average
-    @data.last.running_average = @data.last(12).mean_exp
+    @data.last.running_average = @data.last(8).mean_exp
   end
 end
 
